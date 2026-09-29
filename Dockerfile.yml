@@ -1,0 +1,31 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV USER=rdp
+ENV PASSWORD=rdp12345
+
+RUN apt-get update && apt-get install -y \
+    xfce4 \
+    xfce4-goodies \
+    xrdp \
+    dbus-x11 \
+    sudo \
+    curl \
+    wget \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/bash ${USER} && \
+    echo "${USER}:${PASSWORD}" | chpasswd && \
+    usermod -aG sudo ${USER}
+
+RUN echo "startxfce4" > /home/${USER}/.xsession && \
+    chown ${USER}:${USER} /home/${USER}/.xsession
+
+RUN sed -i 's/^port=3389/port=10000/' /etc/xrdp/xrdp.ini
+
+EXPOSE 10000
+
+CMD service dbus start && \
+    service xrdp start && \
+    tail -f /var/log/xrdp.log
